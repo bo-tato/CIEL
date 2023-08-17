@@ -122,6 +122,14 @@
                :named-readtables
                :clesh  ;; shell pass-through
                :quicksearch  ;; search on GitHub, Cliki, Quickdocs.
+
+               ;; extra libs
+               :slynk
+               :usocket-server
+               :lisp-binary
+               :curry-compose-reader-macros
+               :defclass-std
+               :com.inuoe.jzon
                )
   :components ((:module "src"
                         :components
