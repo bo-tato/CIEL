@@ -138,6 +138,7 @@
                          (:file "ciel")
                          (:file "gui")))
                (:file "utils")
+               (:file "extras")
                (:module "src/more-docstrings"
                         :components
                         ((:file "docstrings"))))
