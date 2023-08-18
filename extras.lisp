@@ -15,21 +15,27 @@
 (cl-reexport:reexport-from :serapeum
                            :include
                            '(:drop-while
-                             :take-while))
+                             :take-while
+                             :take
+                             :drop
+                             :@))
 
-;; utility functions
-(defun drop-until (pred-or-item seq)
+;; extra utility functions
+(export '(drop-until
+          take-until))
+
+(defun drop-until (pred-or-value seq)
   "When passed a function, drop from sequence until the PRED returns true.
-When passed any other value, drop from sequence until finding something equal to ITEM"
-  (let ((pred (if (functionp pred-or-val)
-                  pred-or-val
-                  (lambda (x) (equal x pred-or-val)))))
+When passed any other value, drop from sequence until finding something equal to VALUE"
+  (let ((pred (if (functionp pred-or-value)
+                  pred-or-value
+                  (lambda (x) (equal x pred-or-value)))))
     (serapeum:drop-while (complement pred) seq)))
 
-(defun take-until (pred-or-item seq)
+(defun take-until (pred-or-value seq)
   "When passed a function, take from sequence until the PRED returns true.
-When passed any other value, take from sequence until finding something equal to ITEM"
-  (let ((pred (if (functionp pred-or-val)
-                  pred-or-val
-                  (lambda (x) (equal x pred-or-val)))))
+When passed any other value, take from sequence until finding something equal to VALUE"
+  (let ((pred (if (functionp pred-or-value)
+                  pred-or-value
+                  (lambda (x) (equal x pred-or-value)))))
     (serapeum:take-while (complement pred) seq)))
