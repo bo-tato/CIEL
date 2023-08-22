@@ -130,6 +130,9 @@
                :curry-compose-reader-macros
                :defclass-std
                :com.inuoe.jzon
+               :periods
+               :periods-series
+               :series
                )
   :components ((:module "src"
                         :components
