@@ -138,6 +138,8 @@
 
   2) by using a shebang line."
 
+  (named-readtables:in-readtable :syntax-sugar)
+
   ;; XXX: it might be better to NOT use Clingon: we want to be able to pass remaining options
   ;; to the script.
   ;; ciel -s simpleHTTPserver 9999 => OK
