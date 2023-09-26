@@ -19,6 +19,9 @@
                              :take
                              :drop
                              :@))
+(cl-reexport:reexport-from :uiop/stream
+                           :include
+                           '(:println))
 
 ;; extra utility functions
 (export '(drop-until
