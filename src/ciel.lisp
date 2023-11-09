@@ -38,7 +38,6 @@ We currently only try this with serapeum. See *deps/serapeum/sequences-hashtable
                            '(:define-package ;; shall we override defpackage?
                              :find-symbol*
                              :format!
-                             :println
                              :symbol-call
                              :not-implemented-error
                              :command-line-arguments))
