@@ -8,7 +8,6 @@
 - cl-cron: A simple tool that provides cron like facilities directly inside of common lisp. For this to work properly note that your lisp implementation should have support for threads
 - cl-csv: Facilities for reading and writing CSV format files
 - cl-ppcre: Perl-compatible regular expression library
-- cl-punch: Scala-like anonymous lambda literal
 - cl-reexport: Reexport external symbols in other packages.
 - clesh: Clesh is a very short program that provides
   mechanisms for running and composing Unix shell commands and
@@ -25,11 +24,11 @@ variables and and function return values.
 - dissect: A lib for introspecting the call stack and active restarts.
 - easy-routes: Yet another routes handling utility on top of Hunchentoot
 - fiveam: A simple regression testing framework
-- fn: Some macros for lambda brevity
-- fof: File-object finder. Enable rapid file search, inspection and manipulation.
+<!-- currently removed: -->
+<!-- - fof: File-object finder. Enable rapid file search, inspection and manipulation. -->
 - for: An extensible iteration macro library.
 - fset: A functional set-theoretic collections library.
-See: http://www.ergy.com/FSet.html
+See: https://gitlab.common-lisp.net/fset/fset/-/wikis/home
 - generic-cl: Standard Common Lisp functions implemented using generic functions.
 - hunchentoot: Hunchentoot is a HTTP server based on USOCKET and
   BORDEAUX-THREADS.  It supports HTTP 1.1, serves static files, has a
@@ -42,7 +41,8 @@ See: http://www.ergy.com/FSet.html
 - nodgui: Tck-Tk graphical user interfaces. nodgui is a fork of Ltk with a built-in theme and more widgets.
 - metabang-bind: Bind is a macro that generalizes multiple-value-bind, let, let*, destructuring-bind, structure and slot accessors, and a whole lot more.
 - modf: A SETF like macro for functional programming
-- moira: Monitor and restart background threads.
+<!-- currently removed: -->
+<!-- - moira: Monitor and restart background threads. -->
 - named-readtables: Library that creates a namespace for readtables akin
   to the namespace of packages.
 - parse-float: Parse floating point values in strings.

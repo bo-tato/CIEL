@@ -47,11 +47,6 @@ We currently only try this with serapeum. See *deps/serapeum/sequences-hashtable
                            :include
                            '(:enable-pythonic-string-syntax
                              :disable-pythonic-string-syntax))
-(cl-reexport:reexport-from :cl-punch
-                           :include
-                           '(:enable-punch-syntax
-                             ;; no disable
-                             ))
 
 ;; Pattern matching.
 (cl-reexport:reexport-from :trivia
@@ -138,6 +133,7 @@ We currently only try this with serapeum. See *deps/serapeum/sequences-hashtable
 (defparameter *deps/alexandria/hash-tables*
   '(:hash-table-keys
     :hash-table-values
+    :hash-table-alist
     :ensure-gethash))
 (cl-reexport:reexport-from :alexandria
                            :include
@@ -180,6 +176,7 @@ We currently only try this with serapeum. See *deps/serapeum/sequences-hashtable
     :partition
     :partitions
     :split-sequence
+    :frequencies
 
     :count-cpus
 
@@ -273,6 +270,13 @@ We currently only try this with serapeum. See *deps/serapeum/sequences-hashtable
                                       :defparameter*
                                       :defvar*))
 
+;; ppcre
+(serapeum:defalias apropos-regex #'ppcre:regex-apropos)
+(serapeum:defalias apropos-regex-list #'ppcre:regex-apropos-list)
+
+(export '(apropos-regex
+          apropos-regex-list))
+
 ;;;
 ;;; Conveniently add type declarations.
 ;;; Straight from Serapeum, only it is -> thus it conflicts with our arrow-macro.
@@ -298,6 +302,16 @@ We currently only try this with serapeum. See *deps/serapeum/sequences-hashtable
 
   From SERAPEUM (where it is -> and thus conflicts with our -> arrow-macro)."
   `(declaim (ftype (--> ,args ,values) ,function)))
+
+
+;; from Bard.
+(defmacro ^ (&rest forms)
+  "^ is a synonym macro for lambda.
+
+(^ (x) (+ x 10))
+=>
+(lambda (x) (+ x 10))"
+  `(lambda ,@forms))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

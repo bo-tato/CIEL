@@ -33,7 +33,8 @@ $ ciel -s simpleHTTPserver 9000
 #!/usr/bin/env ciel
 ;; optional shebang line, only for the short ./script call)
 
-;; Start your script with this to access all CIEL goodies:
+;; Start your script with this to access all CIEL goodies.
+;; It is now also optional.
 (in-package :ciel-user)
 
 (defun hello (name)
@@ -101,12 +102,12 @@ Use [cmd](https://github.com/ruricolist/cmd):
 For interactive commands, do:
 
 ~~~lisp
-(cmd:cmd "sudo htop" :<> :interactive)
+(cmd:cmd "sudo htop" :input :interactive :output :interactive)
+;; aka (cmd:cmd "..." :<> :interactive)
 ;; aka (uiop:run-program '("sudo" "htop") :output :interactive :input :interactive)
 ~~~
 
-this works for `sudo`, `htop`, `vim`, `ncdu`… but not for bi-directional interactive
-commands such as `less` or `fzf`.
+this works for `sudo`, `htop`, `less`, `vim`, `ncdu`, `fzf`, `gum` etc.
 
 
 ## Command line arguments
