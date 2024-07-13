@@ -139,6 +139,7 @@
                :periods
                :periods-series
                :series
+               :fn
                )
   :components ((:module "src"
                         :components
