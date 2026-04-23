@@ -7,9 +7,9 @@
 - cl-ansi-text: ANSI control string characters, focused on color
 - cl-cron: A simple tool that provides cron like facilities directly inside of common lisp. For this to work properly note that your lisp implementation should have support for threads
 - cl-csv: Facilities for reading and writing CSV format files
+- cl-ftp: send or receive files from FTP.
 - cl-ppcre: Perl-compatible regular expression library
 - cl-reexport: Reexport external symbols in other packages.
-- clesh: Clesh is a very short program that provides
   mechanisms for running and composing Unix shell commands and
   constructs from Common Lisp.
 
@@ -57,6 +57,7 @@ simple string literal definition that doesn't require escaping characters.
 - shasht: JSON reading and writing for the Kzinti.
 - shlex: Lexical analyzer for simple shell-like syntax.
 - spinneret: Common Lisp HTML5 generator.
+- secret-values: reduce the risk of accidentally revealing secret values such as passwords.
 - str: Modern, consistent and terse Common Lisp string manipulation library.
 - sxql: A SQL generator
 - trivia: NON-optimized pattern matcher compatible with OPTIMA, with extensible optimizer interface and clean codebase

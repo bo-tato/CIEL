@@ -2,162 +2,85 @@
 
 To see the full list of dependencies, see the `ciel.asd` project definition or this [dependencies list](dependencies.md).
 
-## Data structures
+To browse and find other Common Lisp libraries, please visite [awesome-cl](https://github.com/CodyReichert/awesome-cl). They are a `quickload` away.
 
-### Generic and nested access to datastructures (access)
-
-From [Access](https://github.com/AccelerationNet/access/%0A), we import `access` and `accesses` (plural).
-
-It's always
-
-```lisp
-(access my-structure :elt)
-```
-
-for an alist, a hash-table, a struct, an object… Use `accesses` for nested access (specially useful with JSON). See also `json-pointer`.
-
-### Hash-table utilities (Alexandria and Serapeum)
-
-We import functions from [Alexandria](https://alexandria.common-lisp.dev/draft/alexandria.html#Hash-Tables) and [Serapeum](https://github.com/ruricolist/serapeum/blob/master/REFERENCE.md#hash-tables).
-
-To see their full list with their documentation, see [alexandria](alexandria.md) [serapeum](serapeum.md).
-
-```txt
-;; alexandria
-hash-table-keys
-hash-table-values
-ensure-gethash
-```
-
-``` txt
-;; serapeum
-:dict
-:do-hash-table ;; see also trivial-do
-:dict*
-:dictq  ;; quoted
-:href  ;; for nested lookup.
-:href-default
-:pophash
-:swaphash
-:hash-fold
-:maphash-return
-:merge-tables
-:flip-hash-table
-:set-hash-table
-:hash-table-set
-:hash-table-predicate
-:hash-table-function
-:make-hash-table-function
-:delete-from-hash-table
-:pairhash
-```
-
-Here's how we can create a hash-table with keys and values:
-
-``` lisp
-;; create a hash-table:
-(dict :a 1 :b 2 :c 3)
-;; =>
-(dict
- :A 1
- :B 2
- :C 3
-)
-```
-
-In default Common Lisp, you would do:
-
-```lisp
-  (let ((ht (make-hash-table :test 'equal)))
-    (setf (gethash :a ht) 1)
-    (setf (gethash :b ht) 2)
-    (setf (gethash :c ht) 3)
-    ht)
-;; #<HASH-TABLE :TEST EQUAL :COUNT 3 {1006CE5613}>
-```
-
-As seen above, hash-tables are pretty-printed by default.
-
-You can toggle the representation with `toggle-pretty-print-hash-table`, or by setting
-
-```lisp
-(setf *pretty-print-hash-tables* nil)
-```
-
-in your configuration file.
-
-### Sequences utilities (Alexandria, Serapeum)
-
-From *Serapeum* we import:
-
-``` txt
-:assort
-:batches
-:runs
-:partition
-:partitions
-:split-sequence
-```
-
-And from [Alexandria](https://common-lisp.net/project/alexandria/draft/alexandria.html):
-
-``` text
-:iota
-:flatten
-:shuffle
-:random-elt
-:length=
-:last-elt
-:emptyp
-```
-
-From `alexandria-2` we import:
-
-```text
-:subseq*  (the end argument can be larger than the sequence's length)
-```
-
-and some more.
-
-### String manipulation (str)
-
-Available with the `str` prefix.
-
-It provides functions such as: `trim`, `join`, `concat`, `split`, `repeat`, `pad`, `substring`, `replace-all`, `emptyp`, `blankp`, `alphanump`, `upcase`, `upcasep`, `remove-punctuation`, `from-file`, `to-file`…
-
-See <https://github.com/vindarel/cl-str/> and https://lispcookbook.github.io/cl-cookbook/strings.html
 
 Data formats
 ------------
 
 ### CSV
 
-You have [cl-csv](https://github.com/AccelerationNet/cl-csv), under its `cl-csv` package name and the `csv` local nickname.
+Use the `csv` nickname.
+
+You have [cl-csv](https://github.com/AccelerationNet/cl-csv),
+[data-table](https://github.com/AccelerationNet/data-table/) and
+`cl-csv-data-tables` at your disposal, the libraries' symbols are
+re-exported and grouped in the `ciel-csv` package, also available
+under the `csv` local nickname.
+
+`cl-csv` allows to read and write a CSV file, string or stream.
+
+`data-table` allows to work with a "table-like" data-structure where
+you can access columns by name (instead of only by index), coerce
+column types, and more.
+
+`cl-csv-data-tables` brings a couple helpers.
+
+Read a file into a list of lists:
 
 ```lisp
-;; read a file into a list of lists
-(cl-csv:read-csv #P"file.csv")
+(csv:read-csv #P"file.csv")   ;; <--- note the #P
 => (("1" "2" "3") ("4" "5" "6"))
 
-;; read csv from a string (streams also supported)
-(cl-csv:read-csv "1,2,3
+;; read csv from a string (streams are also supported)
+(csv:read-csv "1,2,3
 4,5,6")
 => (("1" "2" "3") ("4" "5" "6"))
+```
 
-;; read a file that's tab delimited
-(cl-csv:read-csv #P"file.tab" :separator #\Tab)
+Read a file that's TAB delimited:
 
-;; loop over a CSV for effect
+```lisp
+(csv:read-csv #P"file.tab" :separator #\Tab)
+```
+
+loop over a CSV for side effects with `do-csv`:
+
+```lisp
 (let ((sum 0))
-  (cl-csv:do-csv (row #P"file.csv")
+  (csv:do-csv (row #P"file.csv")
     (incf sum (parse-integer (nth 0 row))))
   sum)
 ```
 
+Read a CSV, create a data-table object, assume headers are on the
+first row (`:has-column-names`), guess the column types (`:munge-types`):
+
+~~~lisp
+(csv:get-data-table-from-csv #p"file.csv")   ;; <--- still the #P
+;; #<DATA-TABLE:DATA-TABLE {10018A9F63}>
+
+(describe *)
+;; =>
+  COLUMN-NAMES                   = ("Date" "Type" "Quantity" "Total")
+  COLUMN-TYPES                   = (STRING STRING INTEGER DOUBLE-FLOAT)
+  ROWS                           = (("9 jan. 1975" "Sell" 1 9.90) …)
+~~~
+
+Access rows and columns with:
+
+- `csv:rows`
+- `csv:data-table-value dt &key row row-idx col-name col-idx`
+- and more
+
+Write the data-table to a file with `data-table-to-csv dt &optional stream)`.
+
+
 See also:
 
--   [auto-text](https://github.com/defunkydrummer/auto-text), automatic detection for text files (encoding, end of line, column width, csv delimiter etc). [inquisitor](https://github.com/t-sin/inquisitor) for detection of asian and far eastern languages.
--   [CLAWK](https://github.com/sharplispers/clawk), an AWK implementation embedded into Common Lisp, to parse files line-by-line.
+- [auto-text](https://github.com/defunkydrummer/auto-text), automatic detection for text files (encoding, end of line, column width, csv delimiter etc). [inquisitor](https://github.com/t-sin/inquisitor) for detection of asian and far eastern languages.
+- [CLAWK](https://github.com/sharplispers/clawk), an AWK implementation embedded into Common Lisp, to parse files line-by-line.
+- [cl-ansi-term](https://github.com/vindarel/cl-ansi-term), to print data in tables.
 
 ### JSON
 
@@ -409,6 +332,10 @@ A JSON pointer starts with a "/".
 <!-- A note on functions naming: [cl-json-pointer](https://github.com/y2q-actionman/cl-json-pointer/) has some lengthy function names by default (`get-by-json-pointer`), especially if we access them with the `json-pointer:` prefix. They provide very short ones (`get`), they live in another package name `cl-json-pointer/synonyms`. Our `json-pointer` is a nickname to it. If you want to import all the json-pointer functions with `use-package`, you can do so with `cl-json-pointer`. We created smaller function names, which you can import without conflicts (`get-by`). -->
 
 
+### YAML (not included)
+
+Please quickload `cl-yaml` (uses libyaml) or have a look at [nyaml](https://github.com/jasom/nyaml), a Lisp native parser and dumper
+
 
 ## Date and time
 
@@ -425,35 +352,55 @@ Connect to a database with cl-dbi:
 ~~~lisp
  (defvar *connection*
   (dbi:connect :sqlite3
-               :database-name "/home/gt/test.sqlite3"))
+               :database-name "/home/user/test.sqlite3"))
 ~~~
 
-and execute queries.
+`dbi` will install the required database driver on the fly.
 
-Use SXQL to generate SQL from a lispy DSL:
+> Attention: if you build a binary and plan to use it on another
+> machine, you must add the driver as a system dependency. It is one
+> of `:dbd-sqlite3`, `:dbd-mysql` or `:dbd-postgres`.
+
+Now you can execute queries.
+
+Either use SXQL to generate SQL from a lispy DSL:
 
 ~~~lisp
-(select (:id :name :sex)
+(select (:id :name )
   (from (:as :person :p))
   (where (:and (:>= :age 18)
                (:< :age 65)))
   (order-by (:desc :age)))
 ~~~
 
-If you want an ORM, see [Mito](https://github.com/fukamachi/mito/) or [clsql](http://clsql.kpe.io/manual/). You also have things like [cl-yesql](https://github.com/ruricolist/cl-yesql). For more choices, see https://github.com/CodyReichert/awesome-cl#database
+or use in-line SQL:
+
+```lisp
+(dbi:fetch-all
+  (dbi:execute
+    (dbi:prepare *connection* "select id, name from person where age < ?"
+         (list max-age))))
+```
+
+If you want an ORM, see [Mito](https://github.com/fukamachi/mito/). You also have things like [cl-yesql](https://github.com/ruricolist/cl-yesql). For more choices, see https://github.com/CodyReichert/awesome-cl#database
 
 And for a tutorial, see <https://lispcookbook.github.io/cl-cookbook/databases.html>
 
 
 ## Files and directories
 
-CL has built-in functions to deal with files and directories, and UIOP provides more. See [https://lispcookbook.github.io/cl-cookbook/files.html](https://lispcookbook.github.io/cl-cookbook/files.html).
+CL has built-in functions to deal with files and directories, and UIOP (built-in) provides more.
+
+Please refer to:
+
+* [https://lispcookbook.github.io/cl-cookbook/files.html](https://lispcookbook.github.io/cl-cookbook/files.html)
 
 See some functions under `uiop`, especially under `uiop/filesystem` (`filesystem` for short) like `filesystem:file-exists-p`, and some more under `uiop/os` (or just `os`) like `os:getcwd`.
 
 Example functions (not exhaustive):
 
 ```
+;; filesystem is a nickname for UIOP, that includes a few more functions.
 filesystem:call-with-current-directory
 filesystem:collect-sub*directories
 filesystem:delete-directory-tree
@@ -487,69 +434,85 @@ filesystem:truenamize
 filesystem:with-current-directory
 ```
 
-We'd like to mention the [FOF (File-object finder)](https://gitlab.com/ambrevar/fof/) library, which is very useful to:
+We also ship [file-finder](https://github.com/lisp-maintainers/file-finder), which is very handy to:
 
 - search for files, recursively or not, and filter with our predicates,
+  - exclude hidden linux directories and `node_modules/` by
+    default. Furnish the `*exclude-directories*` variable to exclude more.
 - inspect the file objects with the regular `inspect` or `describe`
   tools and see at a glance metadata such as permissions, last access
   time, etc,
 - change metada: the class slots have setters that write to disk,
 - manipulate paths and avoid common pitfalls from the built-in and UIOP functions.
 
-In practice, it mostly supersedes:
+> NB: you can use the `finder` local nickname in the `ciel-user` package.
 
-- Common Lisp pathnames (at least for existing files).
-- Many Unix tools:
-  - `find` for recursive and programmable file search. Unlike `find`, `finder`'s predicates are extensible.
-  - `stat`
-  - `chown`
-  - `chmod`
-  - `du`
-  - `touch`
 
-*(when you want to reach to these tools, you can also use CIEL's shell passthrough)*
-
-Note that FOF is not meant to manipulate arbitrary paths of non-existing files.
+Note that file-finder is not meant to manipulate arbitrary paths of non-existing files.
 Consider using [ppath](https://github.com/fourier/ppath) instead.
-
-> Note: `fof` isn't shipped by default in CIEL anymore since 2023, Nov 18th, you should `quickload`. While still useful, it complicates a little bit the deployment of executables because of its dependency on Osicat, which depends on its own `libosicat.so` shared library.
 
 Quick examples:
 
 ~~~lisp
-;; List all files in the current directory, recursively.
-CIEL-USER> (fof:finder)
+;; List all files in the current directory, recursively:
+CIEL-USER> (file-finder:finder)
 (#F"~/projets/ciel/.git/" #F"~/projets/ciel/.github/" #F"~/projets/ciel/docs/" ...)
 
-CIEL-USER> (fof:finder* :root (fof:file "src/"))
+;; List all files under the src/ directory, recursively:
+CIEL-USER> (file-finder:finder* :root (file-finder:file "src/"))
 (#F"~/projets/ciel/src/ciel.fasl" #F"~/projets/ciel/src/ciel.lisp"
  #F"~/projets/ciel/src/cl-cron.log" #F"~/projets/ciel/src/test-5am.lisp"
  #F"~/projets/ciel/src/utils.lisp")
 
-CIEL-USER> (fof:file "ciel.asd")
+;; List all files with a lisp extension, still recursively:
+CIEL-USER> (file-finder:finder (file-finder:extension= "lisp"))
+(#F"~/projets/ciel/src/ciel.lisp" …)
+
+;; List all files containing a string on their path (full pathname):
+CIEL-USER> (file-finder:finder "foo")
+…
+
+;; List all files whose filename fully matches, case insensitive:
+CIEL-USER> (file-finder:finder (file-finder:iname= "ciel"))
+…
+
+;; Get the filenames as strings, not #F objects:
+CIEL-USER> (mapcar #'path *)
+…
+
+;; Create file objects and inspect their attributes:
+CIEL-USER> (file-finder:file "ciel.asd")
 #F"~/projets/ciel/ciel.asd"
 
 CIEL-USER> (inspect *)
 
-The object is a STANDARD-OBJECT of type FOF/FILE:FILE.
+The object is a STANDARD-OBJECT of type FILE-FINDER/FILE:FILE.
 0. PATH: "/home/vince/projets/ciel/ciel.asd"
 1. INODE: 5287804
 2. LINK-COUNT: 1
 3. KIND: :REGULAR-FILE
 4. SIZE: 3135
 5. DISK-USAGE: 12288
-6. USER-ID: 1000
-7. GROUP-ID: 1000
-8. CREATION-DATE: @2021-08-10T14:39:36.000000+02:00
-9. MODIFICATION-DATE: @2021-08-10T14:39:36.000000+02:00
-10. ACCESS-DATE: @2021-08-10T14:47:24.000000+02:00
-11. PERMISSIONS: (:USER-READ :USER-WRITE :GROUP-READ :GROUP-WRITE :OTHER-READ)
+6. CREATION-DATE: @2021-08-10T14:39:36.000000+02:00
+7. MODIFICATION-DATE: @2021-08-10T14:39:36.000000+02:00
+8. ACCESS-DATE: @2021-08-10T14:47:24.000000+02:00
 >
 ~~~
 
-## GUI (tk)
+And there is more, check file-finder's documentation.
 
-We ship [nodgui](https://lispcookbook.github.io/cl-cookbook/gui.html#tk-ltk-and-nodgui).
+> WARN: file-finder is still experimental.
+
+
+## GUI (tk) (removed)
+
+Previous versions of CIEL shipped [nodgui](https://lispcookbook.github.io/cl-cookbook/gui.html#tk-ltk-and-nodgui) which, in its default form, is featureful but heavy in dependencies for us.
+
+As of August of 2024, a lightweight [`nodgui-lite` system was made available](https://www.autistici.org/interzona/nodgui.html#nodgui-lite).
+
+It is not yet included in CIEL.
+
+We leave nonetheless the presentation of the library.
 
 The Tk toolkit is nearly ubiquitous and simple to use. It doesn't have a great deal of widgets, but it helps anyways for many kind of uses, from utility GUIs to industrial applications. Moreover, it doesn't look aweful (as it did decades ago), it has themes to look surprisingly good on the different platforms.
 
@@ -588,26 +551,6 @@ Use the `with-nodgui` macro to define your GUI, use `make-instance` + a widget n
 ```
 
 Read more: <https://lispcookbook.github.io/cl-cookbook/gui.html#tk>
-
-## Iteration
-
-See <https://lispcookbook.github.io/cl-cookbook/iteration.html> for examples, including about the good old `loop`.
-
-We import macros from [trivial-do](https://github.com/yitzchak/trivial-do/), that provides `dolist`-like macro to iterate over more structures:
-
-- `dohash`: dohash iterates over the elements of an hash table and binds key-var to the key, value-var to the associated value and then evaluates body as a tagbody that can include declarations. Finally the result-form is returned after the iteration completes.
-
-- `doplist`: doplist iterates over the elements of an plist and binds key-var to the key, value-var to the associated value and then evaluates body as a tagbody that can include declarations. Finally the result-form is returned after the iteration completes.
-
-- `doalist`: doalist iterates over the elements of an alist and binds key-var to the car of each element, value-var to the cdr of each element and then evaluates body as a tagbody that can include declarations. Finally the result-form is returned after the iteration completes.
-
-- `doseq*`: doseq\* iterates over the elements of an sequence and binds position-var to the index of each element, value-var to each element and then evaluates body as a tagbody that can include declarations. Finally the result-form is returned after the iteration completes.
-
-- `doseq`: doseq iterates over the elements of an sequence and binds value-var to successive values and then evaluates body as a tagbody that can include declarations. Finally the result-form is returned after the iteration completes.
-
-- `dolist*`: dolist\* iterates over the elements of an list and binds position-var to the index of each element, value-var to each element and then evaluates body as a tagbody that can include declarations. Finally the result-form is returned after the iteration completes.
-
-We ship `for` so you can try it, but we don't import its symbols.
 
 
 ## Numerical and scientific
@@ -761,11 +704,28 @@ We include [file-notify](https://github.com/shinmera/file-notify) to watch chang
 
 
 
-## Regular expressions
+## Security
 
-Use `ppcre`.
+We ship [secret-values](https://github.com/rotatef/secret-values) that
+helps in reducing the risk of accidentally revealing secret values,
+such as passwords.
 
-See <https://common-lisp-libraries.readthedocs.io/cl-ppcre> and <https://lispcookbook.github.io/cl-cookbook/regexp.html>
+When you read a password, you can hide it behind a `secret-values` object:
+
+```lisp
+(secret-values:conceal-value "secret")
+;; => #<SECRET-VALUES:SECRET-VALUE {100F2EC9E3}>
+```
+
+To reveal it, at the last moment, use:
+
+```lisp
+(secret-value:reveal-value *)
+;; => "secret"
+```
+
+See also what `ensure-value-revealed` does on their documentation.
+
 
 ## Threads, monitoring, scheduling
 
@@ -822,35 +782,82 @@ See:
 
 We ship:
 
--   Hunchentoot
--   Easy-routes
+-   Hunchentoot (web server)
+-   Easy-routes (route facility and middleware)
 
-<https://lispcookbook.github.io/cl-cookbook/web.html>
+<https://web-apps-in-lisp.github.io/>
+
+More over, see our `simpleHTTPserver` script, built-in, to serve a local directory:
+
+    $ ciel -s simpleHTTPserver
+    Serving files on port 9000…
+    ⤷ http://127.0.0.1:9000
+
+*(the script name is case insensitive)*
+
+
+## Networking
+
+We ship:
+
+- [cl-ftp](https://github.com/pinterface/cl-ftp). This is a typical Lisp library that looks abandoned, but just works©.
+
+It is available under the `ftp` package name. Here's a quick snippet:
+
+```lisp
+(ftp:with-ftp-connection (conn :hostname (get-hostname)
+                               :username (get-ftp-username)
+                               :password (get-password)
+                               :passive-ftp-p t)
+      (ftp:store-file conn in-filename out-filanem))
+```
+
+and that's it!
+
+To connect to an SFTP server or to another protocol, have a look at our [lftp-wrapper](https://github.com/vindarel/lftp-wrapper). Or simply default out to shell commands with `uiop:run-command` or `cmd:cmd`.
+
+
+## Other utilities
+
+### Progress bar
+
+We ship [progressons](https://github.com/vindarel/progressons), a simple progress bar.
+
+You can use it inside your editor, including Emacs and Slime, as well as on the terminal.
+
+Example usage:
+
+```lisp
+(loop for elt in (progressons:progressbar (list 1 2 3 4 5))
+   do (do-something-with elt)
+      (sleep 0.1)
+      (progressons:step!))
+```
+
+As you can see, it needs a manual `step!` to make it progress.
+
+> WARN: progressons in its present form adds significant overhead. You shouldn't use it with a large dataset.
+
+Use [termp](https://github.com/vindarel/termp) if you want to check
+wether you are inside a dumb terminal, like Slime's REPL, or a real
+one. This check is done by looking at the `TERM` environment variable.
 
 ## Development
-
-### Defining packages
-
-`defpackage` is nice and well, until you notice some shortcomings. That's why we import UIOP's `define-package`. You'll get:
-
-- less warnings when you remove an exported symbol
-- a `:reexport` option (as well as `:use-reexport` and `:mix-reeport`)
-- `:recycle` and `:mix` options.
-
-Here's [uiop:define-package documentation](https://asdf.common-lisp.dev/uiop.html#UIOP_002fPACKAGE).
 
 
 ### Testing (Fiveam)
 
 The [FiveAM](https://common-lisp.net/project/fiveam/docs/) test framework is available for use.
 
-Below we create a package to contain our tests and we define the most simple one:
+CIEL defines a package `ciel-5am-user` that also "uses" all Fiveam symbols, in addition of all others.
+
+It's best to define your own test package for your application (see
+below), but you can start with this one.
+
+Here's how we define a very simple test:
 
 ```lisp
-(defpackage ciel-5am
-  (:use :cl :5am))
-
-(in-package :ciel-5am)
+(in-package :ciel-5am-user)
 
 (test test-one
   (is (= 1 1)))
@@ -913,11 +920,48 @@ Use `run` to not print explanations.
 
 You can use `(!)` to re-run the last run test.
 
+#### Interactive debugger on errors
+
 You can ask 5am to open the interactive debugger on an error:
 
 ``` example
 (setf *debug-on-error* t)
 ```
+
+#### Define your own test package, add local-nicknames
+
+Using only this built-in `ciel-5am-user` package won't be practical if
+you develop different applications at the same time in the same Lisp
+image. Just define a new package:
+
+```lisp
+(uiop:define-package myproject-tests
+   (:use :cl :ciel :5am))
+```
+
+This "uses" all CL, CIEL and Fiveam symbols.
+
+If you want all the local nicknames that are available in the CIEL
+package, copy the list below:
+
+~~~lisp
+(uiop:define-package myproject
+    (:use :cl :ciel)
+    (:local-nicknames (:/os :uiop/os)
+                      (:os :uiop/os)
+                      (:filesystem :uiop/filesystem)
+                      (:finder :file-finder)
+                      (:notify :org.shirakumo.file-notify)
+                      (:alex :alexandria)
+                      (:csv :ciel-csv)
+                      (:http :dexador)
+                      (:json :shasht)
+                      (:json-pointer :cl-json-pointer/synonyms)
+                      (:time :local-time)
+                      (:routes :easy-routes))
+    (:documentation "My package, using CIEL and defining the same local nicknames."))
+~~~
+
 
 ### Logging (log4cl)
 

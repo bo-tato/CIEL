@@ -5,11 +5,14 @@ CIEL's REPL is more user friendly than the default SBCL one. In particular:
 -  it has readline capabilities, meaning that the arrow keys work by default (wouhou!) and there is a persistent history, like in any shell.
 -  it has **multiline input**.
 -  it has **TAB completion**.
+  - including for files (after a bracket) and binaries in the PATH.
 -  it handles errors gracefully: you are not dropped into the debugger and its sub-REPL, you simply see the error message.
 -  it has optional **syntax highlighting**.
-
-- it has a **shell pass-through**: try `!ls` (available in the `ciel-user` package)
+- it has a **shell pass-through**: try `!ls` (also available in Slime)
+  - it runs **interactive commands**: try `!htop`, `!vim test.lisp`, `!emacs -nw test.lisp` or `!env FOO=BAR sudo -i powertop`.
 - it has a quick **edit and load file** command: calling `%edit file.lisp` will open the file with the editor of the EDITOR environment variable. When you close it, the file is loaded and evaluated.
+- it has an optional **lisp critic** that scans the code you enter at
+  the REPL for instances of bad practices.
 
 -  it defines more **helper commands**:
 
@@ -25,7 +28,7 @@ CIEL's REPL is more user friendly than the default SBCL one. In particular:
 
 Our REPL is adapted from [sbcli](https://github.com/hellerve/sbcli). See also [cl-repl](https://github.com/koji-kojiro/cl-repl/), that has an interactive debugger.
 
-> Note: a shell interface doesn't replace a good development environment. See this [list of editors for Common Lisp](https://lispcookbook.github.io/cl-cookbook/editor-support.html): Emacs, Vim, Atom, VSCode, SublimeText, Jupyter Notebooks and more.
+> Note: a shell interface doesn't replace a good development environment. See this [list of editors for Common Lisp](https://lispcookbook.github.io/cl-cookbook/editor-support.html): Emacs, Vim, Atom, VSCode, Intellij, SublimeText, Jupyter Notebooks and more.
 
 ## Quick documentation lookup
 
@@ -38,58 +41,18 @@ ciel-user> %doc dict
 ciel-user> (dict ?
 ```
 
-## Shell pass-through
+## Shell pass-through with "!"
 
-Use `!` to send a shell command:
+Use `!` to send a shell command. All shell commands are run interactively, so you can run `htop`, `sudo`, `emacs -nw` etc.
 
 ```
 !ls
-Makefile
-README.org
-repl.lisp
-repl-utils.lisp
-src
-...
-
-!pwd
-/home/vindarel/projets/ciel
+!sudo emacs -nw /etc/
 ```
 
-Use square brackets `[...]` to write a shell script, and use `$` inside it to escape to lisp:
+We provide TAB completion for shell commands that are in your PATH.
 
-```lisp
-(dotimes (i 7) (princ [echo ?i]))
-```
-
-The result is concatenated into a string and printed on stdout.
-
-This feature is only available by default in CIEL's REPL, not on the
-CIEL-USER package. To enable it yourself, do:
-
-      (ciel:enable-shell-passthrough)
-
-But, some programs are **visual**, or interactive, because they have an ncurses or similar interface. They need
-to be run in their own terminal window. CIEL recognizes a few (`vim`,
-`htop`, `man`… see `*visual-commands*`) and runs them in the first terminal emulator found on
-the system: `terminator`, `xterm`, `gnome-terminal`, Emacs' `vterm` (with emacsclient) or your own.
-
-So, you can run a command similar to this one:
-
-    ENV=env sudo htop
-
-and it will open in a new terminal (hint: a visual command doesn't require the `!` prefix).
-
-To use your terminal emulator of choice, do:
-
-    (push "myterminal" *visual-terminal-emulator-choices*)
-
-> Note: this feature is experimental.
-
-> Note: we encourage our users to use Emacs rather than a terminal!
-
-We use the [Clesh](https://github.com/Neronus/clesh) library for the `!` shell passthrough.
-
-See also [SHCL](https://github.com/bradleyjensen/shcl) for a more unholy union of posix-shell and Common Lisp.
+See [Lish](https://github.com/nibbula/lish/) and [SHCL](https://github.com/bradleyjensen/shcl) for more unholy union of (posix) shells and Common Lisp.
 
 
 ## Syntax highlighting
@@ -97,12 +60,11 @@ See also [SHCL](https://github.com/bradleyjensen/shcl) for a more unholy union o
 Syntax highlighting is off by default. To enable it, install [pygments](https://pygments.org/) and add this in your `~/.cielrc`:
 
 ```lisp
-(in-package :sbcli)
-(setf *syntax-highlighting* t)
+(setf sbcli:*syntax-highlighting* t)
 
 ;; and, optionally:
-;; (setf *pygmentize* "/path/to/pygmentize")
-;; (setf *pygmentize-options* (list "-s" "-l" "lisp"))
+;; (setf sbcli::*pygmentize* "/path/to/pygmentize")
+;; (setf sbcli::*pygmentize-options* (list "-s" "-l" "lisp"))
 ```
 
 You can also switch it on and off from the REPL:

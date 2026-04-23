@@ -1,14 +1,19 @@
 ;; #!/usr/bin/sbcl --script
 (load "~/quicklisp/setup")
 
-(let ((*standard-output* (make-broadcast-stream)))
-  (ql:quickload "cl-readline"))
+(ql:quickload "cl-readline" :silent t)
 
-(defpackage :sbcli
-  (:use :common-lisp :trivial-package-local-nicknames)
+;;; update <2024-09-04>: now all shell commands are run interactively.
+;;; It works for htop, vim, sudo, emacs -nw…
+;;;
+;;; update <2025-02-03>: the "!" "pass-through" is disabled on Slime and "dumb" terminals.
+
+(uiop:define-package :sbcli
+    (:use :common-lisp :trivial-package-local-nicknames)
   (:import-from :magic-ed
-                :magic-ed)
-  (:export sbcli help what *repl-version* *repl-name* *prompt* *prompt2* *result-indicator* *init-file*
+   :magic-ed)
+  (:export repl sbcli help what *repl-version* *repl-name* *prompt* *prompt2* *result-indicator* *init-file*
+           *quicklisp*
            *hist-file* *special*
            *syntax-highlighting* *pygmentize* *pygmentize-options*))
 
@@ -68,7 +73,7 @@
   #+quicklisp
   (format stream "~&Quicklisp: ~a~&" (ql-dist:all-dists))
   #-quicklisp
-  (format stream "!! Quicklisp is not installed !!"))
+  (format stream "Quicklisp is not installed~&"))
 
 (defun read-hist-file ()
   (with-open-file (in *hist-file* :if-does-not-exist :create)
@@ -420,13 +425,88 @@ strings to match candidates against (for example in the form \"package:sym\")."
                   (select-completions "str:con" (list "str:containsp" "str:concat" "str:constant-case"))
                   :test #'string-equal)))
 
+(defun shell-passthrough-p (s)
+  "Return t if s (string) starts with \"!\".
+   We also use it to offer custom TAB completion."
+  (str:starts-with-p "!" s))
+
+(defun complete-filename-p (text start end &key (line-buffer rl:*line-buffer*))
+  "Return T if we should feed the tab completion candidates filenames, instead of the regular Lisp symbols.
+  We answer yes when we are tab-completing a secord word on the prompt and a quote comes before it.
+
+  TEXT, START and END: see `custom-complete'.
+
+ Ex:
+
+  !ls \"test TAB   => yes return files instead of lisp symbols for completion.
+  !\"tes TAB       => well, no.
+  (load \"test TAB => yes
+  (load (test TAB  => no
+"
+  (declare (ignore end))
+  (and (not (shell-passthrough-p text))
+       (> start 1)  ;; 1 is an opening parenthesis.
+       (char-equal #\" (elt line-buffer (1- start))) ;; after an opening quote.
+       ))
+
+#+test-ciel
+(progn
+  (assert (complete-filename-p "test" 7 10 :line-buffer "(load \"test"))
+  (assert (complete-filename-p "test" 7 10 :line-buffer "(!foo \"test"))
+  (assert (not (complete-filename-p "test" 1 5 :line-buffer "\"test")))
+  )
+
+(defun filter-candidates (text file-candidates)
+  "Return a list of files (strings) in the current directory that start with TEXT."
+  ;; yeah, this calls for more features. Hold on a minute will you.
+  (remove-if #'null
+             (mapcar (lambda (path)
+                       (let ((namestring (file-namestring path)))
+                         (when (str:starts-with-p text namestring)
+                           namestring)))
+                     file-candidates)))
+
+(defun complete-binaries-from-path-p (text start end &key (line-buffer rl:*line-buffer*))
+  "Return T if we should TAB-complete shell executables, and search them on the PATH.
+
+  START must be 0: we are writing the first word on the readline prompt,
+  TEXT must start with ! the mark of the shell pass-through."
+  (declare (ignore end line-buffer))
+  (and (zerop start)
+       (str:starts-with-p "!" text)))
+
+(defun find-binaries-candidates (text)
+  "Find binaries starting with TEXT in PATH.
+
+  Return: a list of strings."
+  (loop with s = (string-left-trim "!" text)
+        for dir in (uiop:getenv-absolute-directories "PATH")
+        for res = (filter-candidates s (uiop:directory-files dir))
+        collect res into candidates
+        finally (return
+                  ;; we got "!text", we have to return candidates
+                  ;; with the "!" prefix, so that readline agrees they are completions.
+                  (mapcar (lambda (bin)
+                            (str:concat "!" bin))
+                          (alexandria:flatten candidates)))))
+
 (defun custom-complete (text &optional start end)
   "Custom completer function for readline, triggered when we press TAB.
 
-  START and END are required in the lambda list but are not used. We
-  only complete package and function names, they would help to
-  complete arguments."
-  (declare (ignore start end))
+  Complete filenames on the current directory when appropriate (after a quote).
+
+  TEXT is the current word being type. Not the full command line.
+
+  START is the start of this word. If we type the first word of the command
+  and TAB-complete it, then START equals 0. For a second word, START != 0.
+
+  Ex:
+
+   !ls te TAB
+
+  TEXT is \"te\", START is 4 and END is 6.
+
+  That way we give other completion candidates depending on START."
   (when (string-equal text "")
     (return-from custom-complete nil))
   (destructuring-bind (sym-name pkg-name external-p)
@@ -434,9 +514,16 @@ strings to match candidates against (for example in the form \"package:sym\")."
     (when (and pkg-name
                (not (find-package pkg-name)))
       (return-from custom-complete nil))
+
     (select-completions
      (str:downcase text)
      (cond
+       ((complete-binaries-from-path-p text start end :line-buffer rl:*line-buffer*)
+        (find-binaries-candidates text))
+       ((complete-filename-p text start end :line-buffer rl:*line-buffer*)
+        ;; complete file names on the current directory.
+        ;; Yes we could complete both: lisp symbols AND files. See with usage.
+        (filter-candidates text (uiop:directory-files ".")))
        ((zerop (length pkg-name))
         (list-symbols-and-packages sym-name))
        (external-p
@@ -458,6 +545,14 @@ strings to match candidates against (for example in the form \"package:sym\")."
     (format nil "~a" (if colored
                          (cl-ansi-text:green prompt)
                          prompt))))
+
+(defun run-visual-command (text)
+  "Run this visual command (string, sans \"!\" prefix)."
+  (if (termp:termp)
+      (uiop:run-program (string-left-trim "!" text)
+                        :output :interactive
+                        :input :interactive)
+      (uiop:format! *error-output* "~&Cannot run this shell command: we are not inside a \"real\" terminal.~&")))
 
 (defun sbcli (txt prompt)
   "Read user input and evaluate it.
@@ -492,16 +587,10 @@ strings to match candidates against (for example in the form \"package:sym\")."
       ((str:ends-with-p " ?" text)
        (sbcli::symbol-documentation (last-nested-expr text)))
 
-      ;; Handle visual commands: run in their own terminal window.
-      ((visual-command-p text)
+      ;; Interactive and visual shell command?
+      ;; All shell commands are run interactively.
+      ((shell-passthrough-p text)
        (run-visual-command text))
-
-      ;; Handle shell commands: everything that doesn't start with a lisp special
-      ;; symbol is considered a shell command
-      ((and (not (str:starts-with-p "!" text)) ;; that's clesh syntax.
-            (not (special-command-p text))     ;; starts with %
-            (not (lisp-command-p text)))
-       (run-shell-command text))
 
       ;; Default: run the lisp command (with the lisp-critic, the shell passthrough
       ;; and other add-ons).
@@ -529,6 +618,11 @@ strings to match candidates against (for example in the form \"package:sym\")."
     (rl:redisplay)
     ))
 
+;; testing…
+(defun print-some-text (arg key)
+  (declare (ignore arg key))
+  (rl:insert-text "inserted text"))
+
 (defun repl (&key noinform no-usernit)
   "Toplevel REPL.
 
@@ -550,12 +644,10 @@ strings to match candidates against (for example in the form \"package:sym\")."
       (uiop:quit)))
 
   (rl:register-function :complete #'custom-complete)
-  (rl:register-function :redisplay #'syntax-hl)
 
-  ;; testing…
-  (defun print-some-text (arg key)
-    (declare (ignore arg key))
-    (rl:insert-text "inserted text"))
+  (if *syntax-highlighting*
+      (rl:register-function :redisplay #'syntax-hl)
+      (rl:register-function :redisplay #'rl:redisplay))
 
   #+(or)
   (rl:bind-keyseq "\\C-o" #'print-some-text)
@@ -583,15 +675,6 @@ strings to match candidates against (for example in the form \"package:sym\")."
   (when *hist-file* (read-hist-file))
 
   (in-package :ciel-user)
-
-  ;; Enable Clesh, only for the readline REPL,
-  ;; part because we don't want to clutter the ciel-user package,
-  ;; part because Clesh is buggy for us on Slime (!! and [...]).
-  ;; We get the ! pass-through shell:
-  ;; !ls
-  ;; as well as [ ... ] on multilines.
-  ;; Beware: the double bang !! doesn't work. See issues.
-  (named-readtables:in-readtable clesh:syntax)
 
   (handler-case (sbcli::sbcli "" sbcli::*prompt*)
     (error (c)

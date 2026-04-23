@@ -42,6 +42,12 @@ We currently only try this with serapeum. See *deps/serapeum/sequences-hashtable
                              :not-implemented-error
                              :command-line-arguments))
 
+;; More common names: nappend instead of nconc, etc.
+(cl-reexport:reexport-from :more-common-names
+                           :include
+                           '(:nappend
+                             :nremove))
+
 ;; Syntax.
 (cl-reexport:reexport-from :pythonic-string-reader
                            :include
@@ -125,7 +131,7 @@ We currently only try this with serapeum. See *deps/serapeum/sequences-hashtable
 (defparameter *deps/alexandria-2/sequences*
   '(:subseq*))
 
-(cl-reexport:reexport-from :alexandria-2
+(cl-reexport:reexport-from :alexandria
                            :include
                            *deps/alexandria-2/sequences*)
 
@@ -167,10 +173,11 @@ We currently only try this with serapeum. See *deps/serapeum/sequences-hashtable
             "Symbols imported from ALEXANDRIA for control flow.")
       *doc-pages*)
 
-;; serapeum: sequences/hash tables
+;; serapeum: sequences and hash tables
 (defparameter *deps/serapeum/sequences-hashtables*
   '(:assort
     :batches
+    :filter
     :iota
     :runs
     :partition
@@ -229,6 +236,17 @@ We currently only try this with serapeum. See *deps/serapeum/sequences-hashtable
                            :include
                            '(:defalias))
 
+;; serapeum: functions
+(cl-reexport:reexport-from :serapeum
+                           :include
+                           '(:partial
+                             :juxt))
+;;
+(cl-reexport:reexport-from :alexandria
+                           :include
+                           '(:rcurry))
+
+
 (cl-reexport:reexport-from :trivial-arguments
                            :include '(:arglist))
 
@@ -276,6 +294,11 @@ We currently only try this with serapeum. See *deps/serapeum/sequences-hashtable
 
 (export '(apropos-regex
           apropos-regex-list))
+
+;; function-cache: memoization
+(cl-reexport:reexport-from :function-cache
+                           :include '(:defcached))  ;; not in binary??
+
 
 ;;;
 ;;; Conveniently add type declarations.
@@ -396,7 +419,7 @@ We currently only try this with serapeum. See *deps/serapeum/sequences-hashtable
 (defparameter *current-pprint-indentation* 1
   "We use custom indentation instead of the pretty printer, because it doesn't print correctly in the shell (indentations are way too large).")
 
-;TEST
+;; TEST
 (defun pretty-print-hash-table (ht &optional (stream *standard-output*))
   "Pretty print hash-table HT to STREAM.
 
@@ -454,16 +477,6 @@ We currently only try this with serapeum. See *deps/serapeum/sequences-hashtable
 
 (when *pretty-print-hash-tables*
   (toggle-pretty-print-hash-table t))
-
-(defun enable-shell-passthrough ()
-  "Enable the shell passthrough with \"!\" and \"[\". Enable Clesh's readtable."
-  (named-readtables:in-readtable clesh:syntax))
-
-(defun disable-shell-passthrough ()
-  "(experimental) Disable the shell passthrough with \"!\" and \"[\". Disable Clesh's syntax."
-  (set-macro-character #\! (get-macro-character #\! (copy-readtable nil)))
-  (set-macro-character #\[ (get-macro-character #\[ (copy-readtable nil)))
-  (set-macro-character #\] (get-macro-character #\] (copy-readtable nil))))
 
 (defun ciel-user-help ()
   "Print a short welcome and help message."

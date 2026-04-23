@@ -6,7 +6,7 @@
 
 (asdf:defsystem "ciel"
   :description "CIEL Is an Extended Lisp (Common Lisp, batteries included)."
-  :version "0.1"
+  :version "0.2.1"
   :author "vindarel"
   :license "MIT"
   :homepage "https://github.com/ciel-lang/CIEL/"
@@ -21,22 +21,22 @@
                :alexandria
                :arrow-macros
 
-               ;; Those are two dependencies that we like,
-               ;; but that depend on osicat, hence complicate deployment of binaries.
-               ;; check with (ql:who-depends-on "osicat")
-               ;; Maybe create a sub-system with them.
+               ;; CSV
+               :cl-csv
+               :cl-csv-data-table
+               :data-table
+
+               ;; Previously, we had dependencies that depended on Osicat (fof, moira),
+               ;; hence complicating deployment of binaries.
+               ;; Check with (ql:who-depends-on "osicat") and ditch Osicat.
                ;;
-               ;; :fof  ;; concise file-object finder.
-               ;; :moira  ;; monitor and restart background threads.
-               ;;
-               ;; see
-               ;; https://gitlab.com/ambrevar/fof/-/issues/6
-               ;; https://github.com/ruricolist/moira/issues/1
+               :file-finder  ;; file-object finder
 
                ;; threads
                :bordeaux-threads
                :trivial-monitored-thread
                :lparallel
+               :moira/light  ;; monitor background threads
                :cl-cron
 
                :closer-mop
@@ -57,8 +57,18 @@
                :lquery
                :spinneret   ;; lispy templates. Used in simpleHTTPserver.lisp
 
+               ;; other networking:
+               :cl-ftp  ;; depends on only: split-sequence and usocket.
+
                ;; GUI
-               :nodgui  ;; ltk fork with built-in themes and more widgets.
+               ;; We remove nodgui as of <2024-08-30>
+               ;; because it was too heavy in dependencies, see
+               ;; https://github.com/ciel-lang/CIEL/issues/56
+               ;; We'll test again with its lightweight nodgui-lite system.
+               ;; :nodgui  ;; ltk fork with built-in themes and more widgets.
+               ;; to test:
+               :nodgui-lite
+
 
                ;; CLI
                :clingon  ;; args parsing
@@ -71,8 +81,21 @@
                :parse-number
 
                ;; database
-               :dbi  ;; connects and executes queries.
+               :dbi  ; connects and executes queries.
+               ;; dbi users must reference the driver's dependency
+               ;; when building a binary.
+               ;; If not, dbi wants to install a system on the fly,
+               ;; calls to ASDF, which fails with a useless message.
+               ;;
+               ;; Can we suppose sqlite3 is ubiquitous?
+               ;; This would require libsqlite3 (libsqlite3-dev on Debian).
+               ;; :dbd-sqlite3
+               ;; With those:
+               ;; :dbd-mysql  ;; requires libmysqlclient
+               ;; :dbd-postgres
+
                :sxql ;; SQL generator from lispy syntax.
+               ;; I recently removed Mito. Why? lol.
 
                ;; numerical
                :vgplot
@@ -82,6 +105,13 @@
 
                ;; string manipulation
                :str
+
+               ;; security
+               :secret-values
+
+               ;; other utilities
+               :progressons  ;; no deps. Simple progress bar. Not in Quicklisp as of <2024-08-30>.
+               :termp  ;; no deps. Are we in a dumb terminal like Slime's REPL?
 
                ;;;
                ;;; Language extensions.
@@ -109,6 +139,8 @@
                :serapeum
                :shlex
 
+               :function-cache  ;; memoization
+
                ;; tests
                :fiveam
 
@@ -126,7 +158,6 @@
                ;;; ;TODO: we don't want these dependencies when we build a binary.
                ;;;
                :named-readtables
-               :clesh  ;; shell pass-through
                :quicksearch  ;; search on GitHub, Cliki, Quickdocs.
 
                ;; extra libs
@@ -141,11 +172,15 @@
                :series
                :fn
                )
-  :components ((:module "src"
+  :components ((:module "src/more-common-names"
+                        :components
+                        ((:file "names")))
+               (:module "src"
                         :components
                         ((:file "packages")
                          (:file "json-pointer-minus")
                          (:file "ciel")
+                         (:file "csv")
                          (:file "gui")))
                (:file "utils")
                (:file "extras")
@@ -167,7 +202,6 @@
   :components ((:file "repl")
                (:file "utils")
                (:file "scripting")
-               (:file "shell-utils")
                (:file "repl-utils")
 
                ;; I define them here, for good practice (for me),
@@ -179,13 +213,17 @@
                          (:static-file "simpleHTTPserver")))
                )
 
-  ;; Build a binary with Deploy, ship foreign libraries (and ignore libssl).
-  :defsystem-depends-on (:deploy)  ;; need to (ql:quickload "deploy") before building.
-  ;; :build-operation "program-op"
-  :build-operation "deploy-op"
+  :build-operation "program-op"
+  :build-operation "program-op"
   :build-pathname "ciel"
   :entry-point "ciel::main")
 
 ;;; This defines ciel.asd. It is enough to quickload CIEL.
 ;;; But to build a binary,
 ;;; see build-config.lisp for extra config.
+
+;; build a smaller executable with SBCL's core compression:
+;; from 119MB to 28MB, however startup time increases from 0.02 to 0.35s (noticeable).
+#+sb-core-compression
+(defmethod asdf:perform ((o asdf:image-op) (c asdf:system))
+  (uiop:dump-image (asdf:output-file o c) :executable t :compression t))

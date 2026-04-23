@@ -1,3 +1,135 @@
+## Data structures
+
+### Generic and nested access to datastructures (access)
+
+From [Access](https://github.com/AccelerationNet/access/), we import `access` and `accesses` (plural).
+
+It's always
+
+```lisp
+(access my-structure :elt)
+```
+
+for an alist, a hash-table, a struct, an object… Use `accesses` for nested access (specially useful with JSON). See also `json-pointer`.
+
+### Hash-table utilities (Alexandria and Serapeum)
+
+We import functions from [Alexandria](https://alexandria.common-lisp.dev/draft/alexandria.html#Hash-Tables) and [Serapeum](https://github.com/ruricolist/serapeum/blob/master/REFERENCE.md#hash-tables).
+
+To see their full list with their documentation, see [alexandria](alexandria.md) [serapeum](serapeum.md).
+
+```txt
+;; alexandria
+hash-table-keys
+hash-table-values
+ensure-gethash
+```
+
+``` txt
+;; serapeum
+:dict
+:do-hash-table ;; see also trivial-do
+:dict*
+:dictq  ;; quoted
+:href  ;; for nested lookup.
+:href-default
+:pophash
+:swaphash
+:hash-fold
+:maphash-return
+:merge-tables
+:flip-hash-table
+:set-hash-table
+:hash-table-set
+:hash-table-predicate
+:hash-table-function
+:make-hash-table-function
+:delete-from-hash-table
+:pairhash
+```
+
+Here's how we can create a hash-table with keys and values:
+
+``` lisp
+;; create a hash-table:
+(dict :a 1 :b 2 :c 3)
+;; =>
+(dict
+ :A 1
+ :B 2
+ :C 3
+)
+```
+
+In default Common Lisp, you would do:
+
+```lisp
+  (let ((ht (make-hash-table :test 'equal)))
+    (setf (gethash :a ht) 1)
+    (setf (gethash :b ht) 2)
+    (setf (gethash :c ht) 3)
+    ht)
+;; #<HASH-TABLE :TEST EQUAL :COUNT 3 {1006CE5613}>
+```
+
+As seen above, hash-tables are pretty-printed by default.
+
+You can toggle the representation with `toggle-pretty-print-hash-table`, or by setting
+
+```lisp
+(setf *pretty-print-hash-tables* nil)
+```
+
+in your configuration file.
+
+### Sequences utilities (Alexandria, Serapeum)
+
+From [Serapeum](https://github.com/ruricolist/serapeum/blob/master/REFERENCE.md#sequences) we import:
+
+``` txt
+:assort
+:batches
+:filter
+:runs
+:partition
+:partitions
+:split-sequence
+```
+
+And from [Alexandria](https://common-lisp.net/project/alexandria/draft/alexandria.html):
+
+``` text
+:iota
+:flatten
+:shuffle
+:random-elt
+:length=
+:last-elt
+:emptyp
+```
+
+From `alexandria-2` we import:
+
+```text
+:subseq*  (the end argument can be larger than the sequence's length)
+```
+
+and some more.
+
+### More commonly-named functions
+
+We currently only add 2 aliases: `nappend`, the "non-consing"
+(destructive, memory-efficient) counterpart of `append`, also known as
+`nconc`, and `nremove` as an alias for `delete`.
+
+
+### String manipulation (str)
+
+Available with the `str` prefix.
+
+It provides functions such as: `trim`, `join`, `concat`, `split`, `repeat`, `pad`, `substring`, `replace-all`, `emptyp`, `blankp`, `alphanump`, `upcase`, `upcasep`, `remove-punctuation`, `from-file`, `to-file`…
+
+See <https://github.com/vindarel/cl-str/> and https://lispcookbook.github.io/cl-cookbook/strings.html
 
 ## Arrow macros
 
@@ -55,6 +187,41 @@ And there is more. All the available macros are:
 :some-<>
 :some-<>>
 ```
+
+## Functions
+
+### Partial application
+
+We import Serapeum's `partial` and Alexandria's `rcurry`. They allow
+partial application of functions.
+
+`partial` is similar to `alexandria:curry` but is always inlined.
+
+We import Serapeum's `juxt`.
+
+You can check [Serapeum's function helpers](https://github.com/ruricolist/serapeum/blob/master/REFERENCE.md#functions),
+the non-imported ones are only a `serapeum` package prefix away in CIEL if you need
+them. Other noticeable functions: `distinct`, `once`, `throttle`, `trampoline`, `do-nothing`…
+
+### Memoization
+
+We import `defcached` from
+[function-cache](https://github.com/AccelerationNet/function-cache), a
+library that provides extensible caching/memoization.
+
+For example:
+
+```lisp
+(defcached (foo :timeout 10) (arg)
+  (sleep 3)
+  arg)
+```
+
+Run `(foo 1)`, it sleeps 3 seconds and returns 1. Run `(foo 1)` again
+and it returns 1 immediately. Its result (for this argument) is cached
+for 10 seconds.
+
+
 
 ## Bind, more destructuring in `let` (metabang-bind)
 
@@ -177,6 +344,37 @@ An improved version of `ignore-errors`. The behavior is the same: if an error oc
           ...)
 ```
 
+## Iteration
+
+See <https://lispcookbook.github.io/cl-cookbook/iteration.html> for examples, including about the good old `loop`.
+
+We import macros from [trivial-do](https://github.com/yitzchak/trivial-do/), that provides `dolist`-like macro to iterate over more structures:
+
+- `dohash`: dohash iterates over the elements of an hash table and binds key-var to the key, value-var to the associated value and then evaluates body as a tagbody that can include declarations. Finally the result-form is returned after the iteration completes.
+
+- `doplist`: doplist iterates over the elements of an plist and binds key-var to the key, value-var to the associated value and then evaluates body as a tagbody that can include declarations. Finally the result-form is returned after the iteration completes.
+
+- `doalist`: doalist iterates over the elements of an alist and binds key-var to the car of each element, value-var to the cdr of each element and then evaluates body as a tagbody that can include declarations. Finally the result-form is returned after the iteration completes.
+
+- `doseq*`: doseq\* iterates over the elements of an sequence and binds position-var to the index of each element, value-var to each element and then evaluates body as a tagbody that can include declarations. Finally the result-form is returned after the iteration completes.
+
+- `doseq`: doseq iterates over the elements of an sequence and binds value-var to successive values and then evaluates body as a tagbody that can include declarations. Finally the result-form is returned after the iteration completes.
+
+- `dolist*`: dolist\* iterates over the elements of an list and binds position-var to the index of each element, value-var to each element and then evaluates body as a tagbody that can include declarations. Finally the result-form is returned after the iteration completes.
+
+We ship [`for`](https://github.com/Shinmera/for) so you can try it, but we don't import its symbols. `for`'s `over` keyword allows to loop across all data structures (lists, hash-tables…).
+
+
+## Lambda shortcut
+
+`^` is a synonym macro for `lambda`.
+
+```lisp
+(^ (x) (+ x 10))
+=>
+(lambda (x) (+ x 10))
+```
+
 ## Pythonic triple quotes docstring
 
 We can enable the syntax to use triple quotes for docstrings, and double quotes within them:
@@ -217,15 +415,49 @@ We use [pythonic-string-reader](https://github.com/smithzvk/pythonic-string-read
 too, even only internally. It happens with the Jonathan library.
 
 
-## Lambda shortcut
+## Packages
 
-`^` is a synonym macro for `lambda`.
+`defpackage` is nice and well, until you notice some shortcomings. That's why we import UIOP's `define-package`. You'll get:
 
-```lisp
-(^ (x) (+ x 10))
-=>
-(lambda (x) (+ x 10))
-```
+- less warnings when you remove an exported symbol
+- a `:reexport` option (as well as `:use-reexport` and `:mix-reeport`)
+- `:recycle` and `:mix` options.
+
+It is a drop-in replacement.
+
+Here's [uiop:define-package documentation](https://asdf.common-lisp.dev/uiop.html#UIOP_002fPACKAGE).
+
+### Packages local nicknames
+
+CIEL defines local nicknames for other libraries.
+
+For example, `csv` is a shorter nickname for `cl-csv`. `time` is a
+shorter nickname for `local-time`.
+
+They are available when you are "inside" the CIEL-USER package (when you do `(in-package :ciel-user)`).
+
+If you define a new package that "uses" CIEL, you might want to also
+get this set of nicknames. Here's the full list:
+
+~~~lisp
+(uiop:define-package myproject
+    (:use :cl :ciel)
+    (:local-nicknames (:/os :uiop/os)
+                      (:os :uiop/os)
+                      (:filesystem :uiop/filesystem)
+                      (:finder :file-finder)
+                      (:notify :org.shirakumo.file-notify)
+                      (:alex :alexandria)
+                      (:csv :cl-csv)
+                      (:http :dexador)
+                      (:json :shasht)
+                      (:json-pointer :cl-json-pointer/synonyms)
+                      (:time :local-time)
+                      (:routes :easy-routes))
+    (:documentation "My package, using CIEL and defining the same local nicknames."))
+~~~
+
+
 
 Pattern matching
 ----------------
@@ -317,6 +549,13 @@ Above we use the `list` pattern, and we verify a predicate.
 Trivia has more tricks in its sleeve. See the [special patterns](https://github.com/guicho271828/trivia/wiki/Special-Patterns) (access and change objects), the [ppcre contrib](https://github.com/guicho271828/trivia/wiki/Contrib-packages), etc.
 
 You migth also be interested in exhaustiveness type checking explained just below.
+
+
+## Regular expressions
+
+Use `ppcre`.
+
+See <https://common-lisp-libraries.readthedocs.io/cl-ppcre> and <https://lispcookbook.github.io/cl-cookbook/regexp.html>
 
 
 Type declarations
