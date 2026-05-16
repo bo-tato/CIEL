@@ -427,6 +427,25 @@ Serving files on port 4242…
 127.0.0.1 - [2022-12-14 12:06:00] "GET / HTTP/1.1" 200 200 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:103.0) Gecko/20100101 Firefox/103.0"
 ```
 
+### Install-quicklisp
+
+Call
+
+    $ ciel -s install-quicklisp
+
+to install the [Quicklisp](https://www.quicklisp.org/beta/#installation) library manager.
+
+We do 3 steps:
+
+- load `quicklisp.lisp`, as if you downloaded it from the net,
+- proceed to the installation of the Quicklisp client (you need an internet connection),
+  - it installs itself into `~/quicklisp/`. No customization option yet, it will come, feel free to open an issue or send a PR.
+- run `(ql:add-to-init-file)` to add a snippet into your lisp init file (usually `~/.sbclrc`) so that you can use Quicklisp straight away when starting a REPL.
+  - we *also* add the snippet to `~/.cielrc`.
+
+It is nearly all automatic, you have to confirm to add the setup snippet to your init file.
+
+
 ### Quicksearch
 
 Search for Lisp libraries on Quicklisp, Cliki and Github.

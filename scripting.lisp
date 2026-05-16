@@ -9,6 +9,9 @@
   Hash-table: file name (sans extension) -> file content (string).
   The name is case-insensitive (it's easier for typing things in the terminal).")
 
+(defvar *quicklisp.lisp* #.(str:from-file (asdf:system-relative-pathname :ciel "vendor/quicklisp.lisp"))
+        "The content of quicklisp.lisp, to be LOADed in the install-quicklisp script.")
+
 ;; eval
 (defun wrap-user-code (s)
   "Wrap this user code to handle common conditions, such as a C-c C-c to quit gracefully."
