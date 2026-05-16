@@ -48,7 +48,7 @@
       (t
        ;; Run it!
        ;; We first add a symbol in the feature list, so a script nows when it is being executed.
-       (push :ciel ciel-user::*features*)
+       (pushnew :ciel ciel-user::*features*)
        ;; We ignore the shebang line, if there is one.
        ;; We can call scripts either with ciel -s <name> or with ./script
        (load (maybe-ignore-shebang
@@ -87,7 +87,7 @@
     :long-name "eval"
     :key :eval)
    (clingon:make-option
-    :filepath
+    :string
     :description "run a lisp file"
     :short-name #\s
     :long-name "script"
