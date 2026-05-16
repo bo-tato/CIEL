@@ -1,2 +1,3 @@
 + docs/serapeum.md linguist-vendored
 + docs/dependencies.md linguist-vendored
++ vendor/quicklisp.lisp linguist-vendored
