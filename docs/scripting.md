@@ -463,6 +463,26 @@ the command-line, and if you want project-local dependencies instead
 of dependencies shared in `local-projects`, you might want to look at
 [qlot](https://qlot.tech/) or [ocicl](https://github.com/ocicl/ocicl/).
 
+### Build a project
+
+Call
+
+    $ ciel -s build project project::main
+
+to build an executable for the project in the current directory.
+
+This loads your .asd files and eventually calls `sb-ext:save-lisp-and-die`.
+
+This command assumes the following:
+
+- you have an .asd file that defines an asdf system named `project`.
+
+The second argument of the example tells that your project defines a
+package called `project`, inside of which a function called `main`
+exists.
+
+For more options, do it yourself and look at the [Cookbook](https://lispcookbook.github.io/cl-cookbook/scripting.html).
+
 
 ### Quicksearch
 
