@@ -67,9 +67,14 @@
   (format t "~&Saving the core executable…~&")
   (save-lisp target entry-point)
 
-  (format t "~&All done ✓~&")
+  (format t "~&All done ✓~&") ;; unreached when "dying".
   )
 
+#+ciel
+;; still unseen.
+(push (lambda ()
+        (format t "~&All done.~&"))
+      sb-ext:*exit-hooks*)
 
 #+ciel
 (build (second ciel-user::*script-args*) (third ciel-user::*script-args*))

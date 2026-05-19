@@ -574,7 +574,7 @@ This creates one route on `/` with an optional `name` parameter. Go to `localhos
 
 At this point you'll certainly want to live-reload your changes.
 
-### Auto-reload
+### Auto-reload on the terminal
 
 In this snippet:
 [`webapp-notify.lisp`](https://github.com/ciel-lang/CIEL/blob/master/src/scripts/webapp-notify.lisp),
@@ -609,6 +609,9 @@ This allows you to have a dumb "live reload" workflow with a simple editor and a
   (simple-auto-reload)
   (sleep most-positive-fixnum))
 ~~~
+
+You still need to refresh your browser to see changes ;)
+
 
 ## Misc
 
