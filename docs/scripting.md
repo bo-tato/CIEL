@@ -446,6 +446,23 @@ Note that:
 
 It is all automatic. If the `~/quicklisp` directory already exists, the install stops.
 
+### Install (a Quicklisp library)
+
+Call
+
+    $ ciel -s install foo
+
+to install the *foo* library from Quicklisp in your Quicklisp `local-projects/`.
+
+Note that Quicklisp is best used from the REPL. And you *must* call
+`(ql:quickload "foo")` from the REPL to load the library in your Lisp
+image.
+
+At this point though, if you really want to use a package manager on
+the command-line, and if you want project-local dependencies instead
+of dependencies shared in `local-projects`, you might want to look at
+[qlot](https://qlot.tech/) or [ocicl](https://github.com/ocicl/ocicl/).
+
 
 ### Quicksearch
 
