@@ -1,6 +1,6 @@
 #!/usr/bin/env ciel
 ;;;
-;;; Search for Lisp libraries on Quicklisp, Cliki and Github.
+;;; description: search for Lisp libraries on Quicklisp, Cliki and Github.
 ;;;
 ;;;
 ;;; Run with:

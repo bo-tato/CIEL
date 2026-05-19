@@ -1,4 +1,4 @@
-
+;;; description: a simple tk GUI to convert feet to meters.
 
 #++
 (ql:quickload '("str" "log4cl"))

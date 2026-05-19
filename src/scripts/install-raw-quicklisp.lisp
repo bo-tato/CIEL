@@ -1,3 +1,4 @@
+;;; description: install Quicklisp (simple method, no HTTPS).
 
 (in-package :ciel-user)
 

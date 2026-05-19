@@ -1,5 +1,7 @@
 #!/usr/bin/env ciel
 ;;;
+;;; description: simple web app, watch for write events and re-load the app.
+;;;
 ;;; Run with:
 ;;; $ ./webapp-notify.lisp
 ;;;

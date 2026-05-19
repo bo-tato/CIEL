@@ -6,8 +6,11 @@
 
 (defparameter *scripts* (dict 'equalp)
   "Available scripts.
-  Hash-table: file name (sans extension) -> file content (string).
+  Hash-table: file name (string, sans extension) -> file content (string).
   The name is case-insensitive (it's easier for typing things in the terminal).")
+
+(defparameter *scripts-description* (dict)
+  "For each script (string), its description.")
 
 ;; in-memory sources to be called in scripts.
 (defvar *quicklisp.lisp* #.(str:from-file (asdf:system-relative-pathname :ciel "vendor/quicklisp.lisp"))
@@ -28,6 +31,16 @@
      (error (c)
        (format! *error-output* "~a" c))))
 
+(defun register-description (filename)
+  "Find the script description."
+  (loop for line in (str:lines (str:from-file filename))
+        for name = (pathname-name filename)
+        do (str:match line
+             ((";;; description:" description)
+              (return
+                (setf (gethash name *scripts-description*)
+                      (str:trim description))
+                )))))
 
 (defun register-builtin-scripts ()
   "Find available scripts in src/scripts, register them in *SCRIPTS*.
@@ -39,10 +52,13 @@
   ;;
   ;; (load (make-string-input-stream (str:from-file "src/scripts/simpleHTTPserver.lisp")))
   (loop for file in (uiop:directory-files "src/scripts/")
+        for name = (pathname-name file)
      if (equal "lisp" (pathname-type file))
      do (format t "~t scripts: registering ~a~&" (pathname-name file))
-       (setf (gethash (pathname-name file) *scripts*)
-             (str:from-file file))))
+       (setf (gethash name *scripts*)
+             (str:from-file file))
+
+        (register-description file)))
 
 (defun run-script (name)
   "If NAME is registered in *SCRIPTS*, run this script."
@@ -60,6 +76,14 @@
        ;; We can call scripts either with ciel -s <name> or with ./script
        (load (maybe-ignore-shebang
               (make-string-input-stream content)))))))
+
+(defun list-all-scripts ()
+  (do-hash-table (k v *scripts*)
+    (declare (ignore v))
+    (format t "~t - ~20a~a~&" k
+            (let ((desc (gethash k *scripts-description*)))
+              (if desc (format nil " : ~a" desc) "")))))
+
 
 (defun top-level/command ()
   "Creates and returns the top-level command"
@@ -213,8 +237,7 @@
           (scripts
            (format t "CIEL v~a~%~%" *ciel-version*)
            (format t "Available scripts:~&")
-           (do-hash-table (k v *scripts*)
-             (format t "~t - ~a~&" k))
+           (list-all-scripts)
 
            (format! t "~%See: https://ciel-lang.github.io/CIEL/#/scripting~&")
            (return-from top-level/handler))
@@ -253,7 +276,7 @@
           (t
            ;; XXX: maybe pass all CLI options here, don't re-read them in the repl function.
            ;; (which was the old way).
-           (sbcli::repl)))
+           (uiop:symbol-call 'sbcli 'repl)))
 
       (error (c)
         (format! *error-output* "Unexpected error: ~a~&" c)

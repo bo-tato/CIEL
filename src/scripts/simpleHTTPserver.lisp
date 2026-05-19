@@ -1,5 +1,7 @@
 #!/usr/bin/env ciel
 ;;;
+;;; description: serve files on the current directory.
+;;;
 ;;; Run with:
 ;;; $ ciel -s simpleHTTPserver 4242
 ;;;

@@ -1,4 +1,6 @@
 
+;;; description: install (quickload) a Quicklisp library.
+
 (in-package :ciel-user)
 
 (defun quickload (s)

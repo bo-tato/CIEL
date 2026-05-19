@@ -1,4 +1,4 @@
-;;; description: Install Quicklisp with HTTPS via curl.
+;;; description: install Quicklisp with HTTPS via curl.
 
 (in-package :ciel-user)
 

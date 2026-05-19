@@ -1,6 +1,6 @@
 #!/usr/bin/env ciel
 ;;;
-;;; Call a JSON API, access elements with json-pointer.
+;;; description: call a JSON API, access elements with json-pointer.
 ;;;
 ;;; Example:
 ;;;

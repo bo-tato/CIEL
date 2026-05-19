@@ -1,7 +1,7 @@
 (in-package :ciel-user)
 
 ;;;
-;;; Search files and transform them to mp3 with ffmpeg.
+;;; description: search music files and transform them to mp3 with ffmpeg.
 ;;;
 ;;; Usage:
 ;;;
