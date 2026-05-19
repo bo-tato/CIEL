@@ -9,8 +9,12 @@
   Hash-table: file name (sans extension) -> file content (string).
   The name is case-insensitive (it's easier for typing things in the terminal).")
 
+;; in-memory sources to be called in scripts.
 (defvar *quicklisp.lisp* #.(str:from-file (asdf:system-relative-pathname :ciel "vendor/quicklisp.lisp"))
-        "The content of quicklisp.lisp, to be LOADed in the install-quicklisp script.")
+        "The content of quicklisp.lisp, to be LOAD-ed in the install-raw-quicklisp script.")
+
+(defvar *ql-https-install.sh* #.(str:from-file (asdf:system-relative-pathname :ciel "vendor/ql-https-install.sh"))
+        "The content of ql-https' install.sh, used in the install-quicklisp script.")
 
 ;; eval
 (defun wrap-user-code (s)

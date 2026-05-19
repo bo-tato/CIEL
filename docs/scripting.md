@@ -435,15 +435,16 @@ Call
 
 to install the [Quicklisp](https://www.quicklisp.org/beta/#installation) library manager.
 
-We do 3 steps:
+We install it with HTTPS via cURL (using [ql-https](https://github.com/rudolfochrist/ql-https/)'s shell script).
 
-- load `quicklisp.lisp`, as if you downloaded it from the net,
-- proceed to the installation of the Quicklisp client (you need an internet connection),
-  - it installs itself into `~/quicklisp/`. No customization option yet, it will come, feel free to open an issue or send a PR.
-- run `(ql:add-to-init-file)` to add a snippet into your lisp init file (usually `~/.sbclrc`) so that you can use Quicklisp straight away when starting a REPL.
-  - we *also* add the snippet to `~/.cielrc`.
+Note that:
 
-It is nearly all automatic, you have to confirm to add the setup snippet to your init file.
+- it installs itself into `~/quicklisp/`. No customization option yet, it will come, feel free to open an issue or send a PR.
+- we add a snippet to `~/.cielrc` (it loads Quicklisp automatically when you start a lisp, so you can use it on the REPL straight-away).
+- this script is Unix only, but you can also use the
+  `install-raw-quicklisp` script that uses the default Quicklisp installation method: no curl, no HTTPS, but pure Lisp.
+
+It is all automatic. If the `~/quicklisp` directory already exists, the install stops.
 
 
 ### Quicksearch
@@ -561,7 +562,7 @@ This allows you to have a dumb "live reload" workflow with a simple editor and a
         (handler-case
             (ciel::load-without-shebang "webapp.lisp")
           (reader-error ()
-            ;; Catch some READ errors, such as parenthesis not closed, etc. 
+            ;; Catch some READ errors, such as parenthesis not closed, etc.
             (format! t "~%~%read error, waiting for change…~&"))))))
 
 #+ciel
