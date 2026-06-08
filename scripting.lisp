@@ -4,6 +4,11 @@
 (defparameter *ciel-version* #.(asdf:component-version (asdf:find-system :ciel))
   "CIEL's version, read from the .asd.")
 
+(defparameter *entrypoint-script* nil
+  "Content (string) of the script to run as the entry-point. Used with ciel -s embed script.lisp -o output
+
+  A script here is loaded before CIEL's regular entrypoint.")
+
 (defparameter *scripts* (dict 'equalp)
   "Available scripts.
   Hash-table: file name (string, sans extension) -> file content (string).
@@ -174,6 +179,20 @@
   ;; to the script.
   ;; ciel -s simpleHTTPserver 9999 => OK
   ;; ciel -s simpleHTTPserver 9999 -h => clingon fails with "unkown option -h of kind short".
+
+
+  ;;
+  ;; Run the entrypoint script that was built with ciel -s embed…
+  ;;
+  (when *entrypoint-script*
+    (load (maybe-ignore-shebang
+           (make-string-input-stream *entrypoint-script*)))
+    (termp:quit))
+
+  ;;
+  ;; Normal CLI args parsing.
+  ;;
+
   (let ((args (clingon:command-arguments cmd))
         (user (clingon:getopt cmd :user))
         (eval-string (clingon:getopt cmd :eval))

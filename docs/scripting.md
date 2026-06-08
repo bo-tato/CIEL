@@ -483,6 +483,43 @@ exists.
 
 For more options, do it yourself and look at the [Cookbook](https://lispcookbook.github.io/cl-cookbook/scripting.html).
 
+### Build a project (embed)
+
+Call
+
+    $ ciel -s embed script.lisp -o output
+
+to ship your script as a CIEL binary.
+
+Technically, `output` is a fresh CIEL binary and your script is its
+entry-point.
+
+This gives you a quick and easy solution to build a binary out of your
+script, without writing a proper .asd system definition.
+
+But, without a system definition, you currently can't depend on lisp
+libraries that aren't shipped in CIEL. *Except we do it? Get in touch.*
+
+Example:
+
+```sh
+$ ciel -s embed hello.lisp -o hello
+Building hello.lisp as a CIEL binary to hello…
+
+$ ./hello
+hello!
+```
+
+When `hello.lisp` is:
+
+```lisp
+(defun main ()
+  (print "hello!"))
+
+#+ciel
+(main)
+```
+
 
 ### Quicksearch
 
