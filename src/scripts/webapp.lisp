@@ -1,5 +1,7 @@
 #!/usr/bin/env ciel
 ;;;
+;;; description: example web app, defining a route on /
+;;;
 ;;; Run with:
 ;;; $ ./webapp.lisp
 ;;;

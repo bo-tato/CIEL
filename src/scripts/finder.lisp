@@ -1,12 +1,12 @@
 #!/usr/bin/env ciel
 
-;;
-;; $ ciel finder.lisp foo bar | xargs mpv
-;;
-;; Searches for files matching "foo" and "bar" (in any order) in my music directories.
-;;
-;; o/
-;;
+;;;
+;;; $ ciel finder.lisp foo bar | xargs mpv
+;;;
+;;; description: searches for files matching "foo" and "bar" (in any order) in your music directories.
+;;;
+;;; o/
+;;;
 
 (in-package :ciel-user)
 

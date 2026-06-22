@@ -67,7 +67,27 @@ without CIEL, but then you have to install the library manager first and
 load these libraries into your Lisp image every time you start it. Now,
 you have them at your fingertips whenever you start CIEL.
 
-We also aim to soften the irritating parts of standard Common Lisp. A
+CIEL, called with no arguments, gives you a readline **REPL with
+advanced commands**. History, arrow keys, code completion, syntax
+highlighting, multi-line editing work (contraty to stock SBCL,
+unfortunately). See more below.
+
+ciel is also a **script launcher with fast start-up times** (±10ms). Just run:
+
+    $ ciel myscript
+
+We ship a couple scripts that can be useful, for example:
+
+- `install-quicklisp` will **install Quicklisp**, the classic
+  libraries manager (and we actually use
+  [ql-https](https://github.com/rudolfochrist/ql-https/), installing
+  Quicklisp with HTTPS via cURL)
+- `simpleHTTPserver` to serve the current directory
+- and more
+
+Just run `ciel -s install-quicklisp`.
+
+Last, we aim to soften the irritating parts of standard Common Lisp. A
 famous one, puzzling for beginners and non-optimal for seasoned lispers,
 is the creation of hash-tables. We include the `dict` function from the
 Serapeum library (which we enhanced further with a pull request):
@@ -96,12 +116,7 @@ In standard Common Lisp, the equivalent is more convoluted:
 ;; (and we don't get a readable representation, so our example is not even equivalent)
 ```
 
-Moreover, we bring:
-
--   a **full featured REPL on the terminal** and
--   **scripting capabilities**, see more below.
-
-See *the documentation*.
+*See more in the documentation*.
 
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
 **Table of Contents**

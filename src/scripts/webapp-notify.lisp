@@ -1,5 +1,7 @@
 #!/usr/bin/env ciel
 ;;;
+;;; description: simple web app, watch for write events and re-load the app.
+;;;
 ;;; Run with:
 ;;; $ ./webapp-notify.lisp
 ;;;
@@ -34,15 +36,15 @@
   This redefines our web routes, so we can develop our app in a simple interactive way.
 
   If you are doing that, you'll want to setup a proper dev environment to enjoy full Common Lisp image-based development."
-  (format! t "~&Watching webapp.lisp…")
-  (notify:watch "webapp.lisp")
+  (format! t "~&Watching web app…")
+  (notify:watch (first ciel-user::*script-args*))
   (notify:with-events (file change :timeout T)
     ;; list of events:
     ;; (print (list file change))
     (when (equal change :close-write)
       (format! t "~%~%Reloading ~a…~&" file)
       (handler-case
-          (ciel::load-without-shebang "webapp.lisp")
+          (ciel::load-without-shebang (first ciel-user::*script-args*))
         (reader-error ()
           ;; READ errors, parenthesis not closed, etc. Wait for the developer.
           (format! t "~%~%read error, waiting for change…~&"))))))

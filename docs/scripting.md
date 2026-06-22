@@ -427,6 +427,100 @@ Serving files on port 4242…
 127.0.0.1 - [2022-12-14 12:06:00] "GET / HTTP/1.1" 200 200 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:103.0) Gecko/20100101 Firefox/103.0"
 ```
 
+### Install-quicklisp
+
+Call
+
+    $ ciel -s install-quicklisp
+
+to install the [Quicklisp](https://www.quicklisp.org/beta/#installation) library manager.
+
+We install it with HTTPS via cURL (using [ql-https](https://github.com/rudolfochrist/ql-https/)'s shell script).
+
+Note that:
+
+- it installs itself into `~/quicklisp/`. No customization option yet, it will come, feel free to open an issue or send a PR.
+- we add a snippet to `~/.cielrc` (it loads Quicklisp automatically when you start a lisp, so you can use it on the REPL straight-away).
+- this script is Unix only, but you can also use the
+  `install-raw-quicklisp` script that uses the default Quicklisp installation method: no curl, no HTTPS, but pure Lisp.
+
+It is all automatic. If the `~/quicklisp` directory already exists, the install stops.
+
+### Install (a Quicklisp library)
+
+Call
+
+    $ ciel -s install foo
+
+to install the *foo* library from Quicklisp in your Quicklisp `local-projects/`.
+
+Note that Quicklisp is best used from the REPL. And you *must* call
+`(ql:quickload "foo")` from the REPL to load the library in your Lisp
+image.
+
+At this point though, if you really want to use a package manager on
+the command-line, and if you want project-local dependencies instead
+of dependencies shared in `local-projects`, you might want to look at
+[qlot](https://qlot.tech/) or [ocicl](https://github.com/ocicl/ocicl/).
+
+### Build a project
+
+Call
+
+    $ ciel -s build project project::main
+
+to build an executable for the project in the current directory.
+
+This loads your .asd files and eventually calls `sb-ext:save-lisp-and-die`.
+
+This command assumes the following:
+
+- you have an .asd file that defines an asdf system named `project`.
+
+The second argument of the example tells that your project defines a
+package called `project`, inside of which a function called `main`
+exists.
+
+For more options, do it yourself and look at the [Cookbook](https://lispcookbook.github.io/cl-cookbook/scripting.html).
+
+### Build a project (embed)
+
+Call
+
+    $ ciel -s embed script.lisp -o output
+
+to ship your script as a CIEL binary.
+
+Technically, `output` is a fresh CIEL binary and your script is its
+entry-point.
+
+This gives you a quick and easy solution to build a binary out of your
+script, without writing a proper .asd system definition.
+
+But, without a system definition, you currently can't depend on lisp
+libraries that aren't shipped in CIEL. *Except we do it? Get in touch.*
+
+Example:
+
+```sh
+$ ciel -s embed hello.lisp -o hello
+Building hello.lisp as a CIEL binary to hello…
+
+$ ./hello
+hello!
+```
+
+When `hello.lisp` is:
+
+```lisp
+(defun main ()
+  (print "hello!"))
+
+#+ciel
+(main)
+```
+
+
 ### Quicksearch
 
 Search for Lisp libraries on Quicklisp, Cliki and Github.
@@ -517,7 +611,7 @@ This creates one route on `/` with an optional `name` parameter. Go to `localhos
 
 At this point you'll certainly want to live-reload your changes.
 
-### Auto-reload
+### Auto-reload on the terminal
 
 In this snippet:
 [`webapp-notify.lisp`](https://github.com/ciel-lang/CIEL/blob/master/src/scripts/webapp-notify.lisp),
@@ -542,7 +636,7 @@ This allows you to have a dumb "live reload" workflow with a simple editor and a
         (handler-case
             (ciel::load-without-shebang "webapp.lisp")
           (reader-error ()
-            ;; Catch some READ errors, such as parenthesis not closed, etc. 
+            ;; Catch some READ errors, such as parenthesis not closed, etc.
             (format! t "~%~%read error, waiting for change…~&"))))))
 
 #+ciel
@@ -552,6 +646,9 @@ This allows you to have a dumb "live reload" workflow with a simple editor and a
   (simple-auto-reload)
   (sleep most-positive-fixnum))
 ~~~
+
+You still need to refresh your browser to see changes ;)
+
 
 ## Misc
 

@@ -4,10 +4,25 @@
 (defparameter *ciel-version* #.(asdf:component-version (asdf:find-system :ciel))
   "CIEL's version, read from the .asd.")
 
+(defparameter *entrypoint-script* nil
+  "Content (string) of the script to run as the entry-point. Used with ciel -s embed script.lisp -o output
+
+  A script here is loaded before CIEL's regular entrypoint.")
+
 (defparameter *scripts* (dict 'equalp)
   "Available scripts.
-  Hash-table: file name (sans extension) -> file content (string).
+  Hash-table: file name (string, sans extension) -> file content (string).
   The name is case-insensitive (it's easier for typing things in the terminal).")
+
+(defparameter *scripts-description* (dict)
+  "For each script (string), its description.")
+
+;; in-memory sources to be called in scripts.
+(defvar *quicklisp.lisp* #.(str:from-file (asdf:system-relative-pathname :ciel "vendor/quicklisp.lisp"))
+        "The content of quicklisp.lisp, to be LOAD-ed in the install-raw-quicklisp script.")
+
+(defvar *ql-https-install.sh* #.(str:from-file (asdf:system-relative-pathname :ciel "vendor/ql-https-install.sh"))
+        "The content of ql-https' install.sh, used in the install-quicklisp script.")
 
 ;; eval
 (defun wrap-user-code (s)
@@ -21,6 +36,16 @@
      (error (c)
        (format! *error-output* "~a" c))))
 
+(defun register-description (filename)
+  "Find the script description."
+  (loop for line in (str:lines (str:from-file filename))
+        for name = (pathname-name filename)
+        do (str:match line
+             ((";;; description:" description)
+              (return
+                (setf (gethash name *scripts-description*)
+                      (str:trim description))
+                )))))
 
 (defun register-builtin-scripts ()
   "Find available scripts in src/scripts, register them in *SCRIPTS*.
@@ -32,10 +57,13 @@
   ;;
   ;; (load (make-string-input-stream (str:from-file "src/scripts/simpleHTTPserver.lisp")))
   (loop for file in (uiop:directory-files "src/scripts/")
+        for name = (pathname-name file)
      if (equal "lisp" (pathname-type file))
      do (format t "~t scripts: registering ~a~&" (pathname-name file))
-       (setf (gethash (pathname-name file) *scripts*)
-             (str:from-file file))))
+       (setf (gethash name *scripts*)
+             (str:from-file file))
+
+        (register-description file)))
 
 (defun run-script (name)
   "If NAME is registered in *SCRIPTS*, run this script."
@@ -48,11 +76,19 @@
       (t
        ;; Run it!
        ;; We first add a symbol in the feature list, so a script nows when it is being executed.
-       (push :ciel ciel-user::*features*)
+       (pushnew :ciel ciel-user::*features*)
        ;; We ignore the shebang line, if there is one.
        ;; We can call scripts either with ciel -s <name> or with ./script
        (load (maybe-ignore-shebang
               (make-string-input-stream content)))))))
+
+(defun list-all-scripts ()
+  (do-hash-table (k v *scripts*)
+    (declare (ignore v))
+    (format t "~t - ~20a~a~&" k
+            (let ((desc (gethash k *scripts-description*)))
+              (if desc (format nil " : ~a" desc) "")))))
+
 
 (defun top-level/command ()
   "Creates and returns the top-level command"
@@ -87,7 +123,7 @@
     :long-name "eval"
     :key :eval)
    (clingon:make-option
-    :filepath
+    :string
     :description "run a lisp file"
     :short-name #\s
     :long-name "script"
@@ -145,6 +181,20 @@
   ;; to the script.
   ;; ciel -s simpleHTTPserver 9999 => OK
   ;; ciel -s simpleHTTPserver 9999 -h => clingon fails with "unkown option -h of kind short".
+
+
+  ;;
+  ;; Run the entrypoint script that was built with ciel -s embed…
+  ;;
+  (when *entrypoint-script*
+    (load (maybe-ignore-shebang
+           (make-string-input-stream *entrypoint-script*)))
+    (termp:quit))
+
+  ;;
+  ;; Normal CLI args parsing.
+  ;;
+
   (let ((args (clingon:command-arguments cmd))
         (user (clingon:getopt cmd :user))
         (eval-string (clingon:getopt cmd :eval))
@@ -208,8 +258,7 @@
           (scripts
            (format t "CIEL v~a~%~%" *ciel-version*)
            (format t "Available scripts:~&")
-           (do-hash-table (k v *scripts*)
-             (format t "~t - ~a~&" k))
+           (list-all-scripts)
 
            (format! t "~%See: https://ciel-lang.github.io/CIEL/#/scripting~&")
            (return-from top-level/handler))
@@ -248,7 +297,7 @@
           (t
            ;; XXX: maybe pass all CLI options here, don't re-read them in the repl function.
            ;; (which was the old way).
-           (sbcli::repl)))
+           (uiop:symbol-call 'sbcli 'repl)))
 
       (error (c)
         (format! *error-output* "Unexpected error: ~a~&" c)
